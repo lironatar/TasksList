@@ -1,21 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Navbar from '../components/Navbar';
 
 const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col" style={{direction: 'rtl'}}>
-      {/* Navigation */}
-      <nav className="bg-white shadow-md py-4">
-        <div className="container mx-auto px-6 flex items-center justify-between">
-          <div>
-            <Link to="/" className="text-2xl font-bold text-blue-600">רשימות משימות</Link>
-          </div>
-          <div className="flex gap-4">
-            <Link to="/login" className="px-4 py-2 text-blue-600 rounded hover:bg-blue-50">התחברות</Link>
-            <Link to="/register" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">הרשמה</Link>
-          </div>
-        </div>
-      </nav>
+      {/* Use the main Navbar component */}
+      <Navbar />
 
       {/* Hero Section */}
       <div className="bg-blue-50 py-20" style={{backgroundColor: '#bfdbfe'}}>

@@ -9,7 +9,6 @@ import TaskList from './components/TaskList';
 import Register from './pages/Register';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
-import SimpleTaskList from './components/SimpleTaskList';
 
 // Define AuthContext interface
 interface AuthContextType {
@@ -140,7 +139,6 @@ function App() {
     <AuthContext.Provider value={authContextValue}>
       <div className="App" style={{backgroundColor: '#f0f4f8', minHeight: '100vh'}}>
         <Router>
-          <Navbar />
           <main className="content-wrapper">
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -150,6 +148,7 @@ function App() {
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>
+                    <Navbar />
                     <Dashboard />
                   </ProtectedRoute>
                 }
@@ -158,6 +157,7 @@ function App() {
                 path="/task-list/:id" 
                 element={
                   <ProtectedRoute>
+                    <Navbar />
                     <TaskListDetail />
                   </ProtectedRoute>
                 } 
@@ -166,15 +166,8 @@ function App() {
                 path="/task-list" 
                 element={
                   <ProtectedRoute>
+                    <Navbar />
                     <TaskList />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/simple-task-list" 
-                element={
-                  <ProtectedRoute>
-                    <SimpleTaskList />
                   </ProtectedRoute>
                 } 
               />

@@ -32,38 +32,36 @@ const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md dark:bg-gray-800">
+    <nav className="bg-white shadow-md dark:bg-gray-800" style={{direction: 'rtl'}}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/" className="text-xl font-bold text-blue-600 dark:text-blue-500">
-                TasksLists
+                רשימות משימות
               </Link>
             </div>
           </div>
 
           {/* Desktop menu */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 rtl:space-x-reverse">
               {user ? (
                 <>
                   <Link 
                     to="/dashboard" 
                     className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
                   >
-                    Dashboard
+                    לוח בקרה
                   </Link>
-                  <li className="mx-2">
-                    <Link
-                      to="/simple-task-list"
-                      className="text-blue-200 hover:text-white transition-colors"
-                    >
-                      רשימה פשוטה
-                    </Link>
-                  </li>
                   <div className="relative ml-3">
-                    <div>
+                    <div className="flex items-center">
+                      <button
+                        onClick={handleLogout}
+                        className="ml-4 text-sm text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500"
+                      >
+                        התנתק
+                      </button>
                       <button 
                         onClick={() => setShowProfileIconSelector(!showProfileIconSelector)}
                         className="flex text-sm rounded-full focus:outline-none"
@@ -85,15 +83,15 @@ const Navbar: React.FC = () => {
                           >
                             <button
                               onClick={() => setShowProfileIconSelector(true)}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                              className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                             >
-                              Change Profile Icon
+                              שנה סמל פרופיל
                             </button>
                             <button
                               onClick={handleLogout}
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                              className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                             >
-                              Sign out
+                              התנתק
                             </button>
                           </motion.div>
                         </div>
@@ -107,13 +105,13 @@ const Navbar: React.FC = () => {
                     to="/login" 
                     className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
                   >
-                    Login
+                    התחברות
                   </Link>
                   <Link 
                     to="/register" 
                     className="px-3 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700"
                   >
-                    Register
+                    הרשמה
                   </Link>
                 </>
               )}
@@ -126,7 +124,7 @@ const Navbar: React.FC = () => {
               onClick={handleToggleMenu}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700"
             >
-              <span className="sr-only">Open main menu</span>
+              <span className="sr-only">פתח תפריט</span>
               {!isMenuOpen ? (
                 <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -157,36 +155,28 @@ const Navbar: React.FC = () => {
                     to="/dashboard" 
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
                   >
-                    Dashboard
+                    לוח בקרה
                   </Link>
-                  <li className="mx-2">
-                    <Link
-                      to="/simple-task-list"
-                      className="text-blue-200 hover:text-white transition-colors"
-                    >
-                      רשימה פשוטה
-                    </Link>
-                  </li>
                   <div className="flex justify-between items-center px-3 py-2">
                     <div className="flex items-center">
                       <ProfileIcon 
                         icon={user.profile_icon || 'https://img.icons8.com/color/96/user-male-circle--v1.png'} 
                         size="sm" 
                       />
-                      <span className="ml-3 text-gray-700 dark:text-gray-300">{user.email}</span>
+                      <span className="mr-3 text-gray-700 dark:text-gray-300">{user.email}</span>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowProfileIconSelector(true)}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="block w-full text-right px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
-                    Change Profile Icon
+                    שנה סמל פרופיל
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="block w-full text-right px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
-                    Sign out
+                    התנתק
                   </button>
                 </>
               ) : (
@@ -195,13 +185,13 @@ const Navbar: React.FC = () => {
                     to="/login" 
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
                   >
-                    Login
+                    התחברות
                   </Link>
                   <Link 
                     to="/register" 
                     className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
                   >
-                    Register
+                    הרשמה
                   </Link>
                 </>
               )}

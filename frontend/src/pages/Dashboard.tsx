@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { authApi, taskListsApi, tasksApi } from '../utils/api';
+import { taskListsApi } from '../utils/api';
 import { AuthContext } from '../App';
+import ProfileIcon from '../components/ProfileIcon';
 
 interface Task {
   id: string;
@@ -24,11 +25,13 @@ interface TaskList {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext);
+  const { user, updateProfileIcon } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [taskLists, setTaskLists] = useState<TaskList[]>([]);
   const [userFirstName, setUserFirstName] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [showIconEdit, setShowIconEdit] = useState(false);
+  const [showProfileIconSelector, setShowProfileIconSelector] = useState(false);
 
   useEffect(() => {
     const fetchTaskLists = async () => {
@@ -58,40 +61,46 @@ const Dashboard: React.FC = () => {
     fetchTaskLists();
   }, [user]);
 
-  const handleLogout = async () => {
-    await authApi.logout();
-    navigate('/login');
-    // Refresh to clear state
-    window.location.reload();
+  const handleProfileIconChange = (icon: string) => {
+    if (updateProfileIcon && user) {
+      updateProfileIcon(icon);
+    }
+    setShowProfileIconSelector(false);
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">ברוך הבא {userFirstName}!</h1>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
+    <div className="max-w-6xl mx-auto p-6" style={{ direction: 'rtl' }}>
+      <div className="flex items-center mb-8">
+        <div 
+          className="relative cursor-pointer mr-2"
+          onMouseEnter={() => setShowIconEdit(true)}
+          onMouseLeave={() => setShowIconEdit(false)}
+          onClick={() => setShowProfileIconSelector(true)}
         >
-          התנתק
-        </button>
+          <ProfileIcon 
+            icon={user?.profile_icon || 'https://img.icons8.com/color/96/user-male-circle--v1.png'} 
+            size="lg" 
+          />
+          {showIconEdit && (
+            <div className="absolute inset-0 bg-black bg-opacity-40 rounded-full flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </div>
+          )}
+        </div>
+        <h1 className="text-2xl font-bold mr-3">ברוך הבא {userFirstName}!</h1>
       </div>
 
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">רשימות המשימות שלך</h2>
-          <div className="space-x-2 rtl:space-x-reverse">
+          <div>
             <Link
               to="/task-list"
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
               צור רשימת משימות חדשה
-            </Link>
-            <Link
-              to="/simple-task-list"
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-200"
-            >
-              יצירת רשימה פשוטה
             </Link>
           </div>
         </div>
@@ -160,6 +169,43 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Profile Icon Selector Modal */}
+      {showProfileIconSelector && user && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" onClick={() => setShowProfileIconSelector(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4 text-center">בחר סמל פרופיל</h3>
+              <div className="grid grid-cols-4 gap-4 mb-4">
+                {['https://img.icons8.com/color/96/user-male-circle--v1.png',
+                  'https://img.icons8.com/color/96/user-female-circle--v1.png',
+                  'https://img.icons8.com/color/96/user-male-skin-type-3--v1.png',
+                  'https://img.icons8.com/color/96/user-female-skin-type-3--v1.png',
+                  'https://img.icons8.com/plasticine/100/cat-profile.png',
+                  'https://img.icons8.com/plasticine/100/dog-profile.png',
+                  'https://img.icons8.com/office/80/year-of-tiger.png',
+                  'https://img.icons8.com/office/80/year-of-ox.png'].map((icon, index) => (
+                  <div 
+                    key={index}
+                    className={`cursor-pointer p-2 border rounded-lg ${user.profile_icon === icon ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                    onClick={() => handleProfileIconChange(icon)}
+                  >
+                    <img src={icon} alt={`Profile icon ${index + 1}`} className="w-full" />
+                  </div>
+                ))}
+              </div>
+              <div className="text-center">
+                <button
+                  onClick={() => setShowProfileIconSelector(false)}
+                  className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-gray-800"
+                >
+                  סגור
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
