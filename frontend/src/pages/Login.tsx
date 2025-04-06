@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../utils/supabaseClient';
-import axios, { AxiosResponse } from 'axios';
+import { authApi } from '../utils/api';
+import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AuthContext } from '../App';
 
 interface LocationState {
   message?: string;
@@ -17,6 +19,7 @@ interface VerificationResponse {
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useContext(AuthContext);
   const state = location.state as LocationState;
   
   const [formData, setFormData] = useState({
@@ -62,93 +65,118 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
+    setMessage('');
+    
+    if (!formData.email || !formData.password) {
+      setError('יש למלא את כל השדות');
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      // Validate form data
-      if (!formData.email || !formData.password) {
-        throw new Error('נא למלא את כל השדות');
-      }
-
-      // Sign in with Supabase Auth
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (signInError) {
-        throw signInError;
-      }
-
-      // Check if the user is verified
-      if (data.user) {
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('is_verified')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          throw new Error('שגיאה בבדיקת סטטוס האימות');
+      // Sign in with our Auth API using the context login function
+      try {
+        const data = await login({ email: formData.email, password: formData.password });
+        
+        if (!data) {
+          throw new Error('שגיאה בהתחברות');
         }
-
-        if (!profileData || !profileData.is_verified) {
-          // User is not verified, sign them out and show verification form
-          await supabase.auth.signOut();
+        
+        if (data.user) {
+          setMessage('התחברת בהצלחה! מעביר אותך לדף הראשי...');
           
-          // Send a new verification code
-          await axios.post('http://localhost:8000/api/v1/verification/send-code', { 
-            email: formData.email 
-          });
-          
+          // Navigate after a short delay
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        } else if (data.needsVerification) {
+          // Handle the case when the user needs to verify their email
           setShowVerification(true);
-          setError('האימייל שלך לא אומת. נא להזין את קוד האימות שנשלח לאימייל שלך.');
-          setLoading(false);
-          return;
+          
+          // Request a verification code to be sent
+          try {
+            await authApi.verify({ email: formData.email, code: '' });
+            setError('האימייל שלך לא אומת. נא להזין את קוד האימות שנשלח לאימייל שלך.');
+          } catch (verifyError) {
+            console.error('Error sending verification code:', verifyError);
+            setError('לא ניתן לשלוח קוד אימות. נסה שוב מאוחר יותר.');
+          }
+        }
+      } catch (error: any) {
+        console.error('Login error:', error);
+        
+        if (error.response?.data?.detail === 'User not verified') {
+          // Request a verification code to be sent
+          try {
+            await authApi.verify({ email: formData.email, code: '' });
+            setShowVerification(true);
+            setError('האימייל שלך לא אומת. נא להזין את קוד האימות שנשלח לאימייל שלך.');
+          } catch (verifyError) {
+            console.error('Error sending verification code:', verifyError);
+            setError('לא ניתן לשלוח קוד אימות. נסה שוב מאוחר יותר.');
+          }
+        } else {
+          setError(error.response?.data?.detail || 'שגיאה בהתחברות');
         }
       }
-
-      // User is verified, navigate to dashboard
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'שגיאה בהתחברות');
+    } catch (error: any) {
+      console.error('Error:', error);
+      setError(error.message || 'שגיאה לא צפויה. אנא נסה שוב.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyCode = async (e: React.FormEvent) => {
+  const handleVerificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
+    setMessage('');
+    
+    if (!verificationCode) {
+      setError('יש להזין קוד אימות');
+      return;
+    }
+    
+    setLoading(true);
+    
     try {
-      if (!verificationCode) {
-        throw new Error('נא להזין את קוד האימות');
+      // Verify the code using our API
+      const response = await authApi.verify({ email: formData.email, code: verificationCode });
+      
+      if (response) {
+        setMessage('האימייל אומת בהצלחה! כעת ניתן להתחבר למערכת.');
+        
+        // After successful verification, attempt to login automatically
+        if (formData.email && formData.password) {
+          setTimeout(async () => {
+            setMessage('מתחבר למערכת...');
+            try {
+              const data = await login({ email: formData.email, password: formData.password });
+              if (data && data.user) {
+                setMessage('התחברת בהצלחה! מעביר אותך לדף הראשי...');
+                // Navigate to dashboard
+                setTimeout(() => {
+                  navigate('/dashboard');
+                }, 1000);
+              }
+            } catch (loginError) {
+              console.error('Error auto logging in after verification:', loginError);
+              setError('האימות הצליח, אך ההתחברות נכשלה. אנא נסה להתחבר שוב.');
+              setShowVerification(false);
+            }
+          }, 1500);
+        } else {
+          // If we don't have login credentials, just return to login form
+          setTimeout(() => {
+            setShowVerification(false);
+          }, 2000);
+        }
       }
-
-      if (!formData.email) {
-        throw new Error('אימייל חסר, נא לרענן את הדף ולנסות שוב');
-      }
-
-      // Verify the code
-      const response = await axios.post('http://localhost:8000/api/v1/verification/verify-code', {
-        email: formData.email,
-        code: verificationCode
-      });
-
-      if (response.status === 200) {
-        setMessage('האימייל אומת בהצלחה! עכשיו אתה יכול להתחבר.');
-        setShowVerification(false);
-        setVerificationCode('');
-      } else {
-        throw new Error('אימות נכשל. נא לנסות שוב.');
-      }
-    } catch (err: any) {
-      console.error('Verification error:', err);
-      setError(err.response?.data?.detail || err.message || 'שגיאה באימות הקוד');
+    } catch (error: any) {
+      console.error('Verification error:', error);
+      setError(error.response?.data?.detail || 'קוד האימות שגוי או שפג תוקפו');
     } finally {
       setLoading(false);
     }
@@ -164,11 +192,10 @@ const Login: React.FC = () => {
     setError('');
     
     try {
-      await axios.post('http://localhost:8000/api/v1/verification/send-code', {
-        email: formData.email
-      });
-      
+      // Use the verify API endpoint with empty code to request a new verification code
+      await authApi.verify({ email: formData.email, code: '' });
       setMessage('קוד אימות חדש נשלח לאימייל שלך');
+      setResendTimer(120); // 2 minutes
     } catch (err: any) {
       console.error('Error sending verification code:', err);
       setError(err.response?.data?.detail || err.message || 'שגיאה בשליחת קוד האימות');
@@ -177,13 +204,19 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleResendCode = async () => {
+  const handleResendVerificationCode = async () => {
+    if (resendTimer > 0) {
+      return;
+    }
+    
     try {
-      await axios.post('http://localhost:8000/api/v1/verification/resend-code', { email: formData.email });
-      setResendTimer(120); // Reset timer to 2 minutes
-      setError('');
-    } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to resend code');
+      // Request a new verification code - sending empty code signals to generate a new one
+      await authApi.verify({ email: formData.email, code: '' });
+      setMessage('קוד אימות חדש נשלח לאימייל שלך');
+      setResendTimer(120); // 2 minutes
+    } catch (err: any) {
+      console.error('Resend error:', err);
+      setError('שגיאה בשליחת קוד אימות חדש. אנא נסה שוב מאוחר יותר.');
     }
   };
 
@@ -194,19 +227,35 @@ const Login: React.FC = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {showVerification ? 'אימות אימייל' : 'התחברות לחשבון'}
           </h2>
-          {message && (
-            <div className="mt-4 p-3 bg-green-100 text-green-700 rounded">
-              {message}
-            </div>
-          )}
-          {error && (
-            <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
-              {error}
-            </div>
-          )}
+          <AnimatePresence>
+            {message && (
+              <motion.div 
+                className="mt-4 p-3 bg-green-100 text-green-700 rounded"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                className="mt-4 p-3 bg-red-100 text-red-700 rounded"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        <form className="space-y-6" onSubmit={showVerification ? handleVerifyCode : handleSubmit}>
+        <form className="space-y-6" onSubmit={showVerification ? handleVerificationSubmit : handleSubmit}>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               כתובת אימייל
@@ -276,10 +325,20 @@ const Login: React.FC = () => {
           <div>
             <button
               type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              disabled={loading || (showVerification && resendTimer > 0)}
+              className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {loading ? 'מעבד...' : showVerification ? 'אמת קוד' : 'התחבר'}
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {showVerification ? 'שולח קוד אימות...' : 'מתחבר...'}
+                </div>
+              ) : (
+                showVerification ? 'אמת קוד' : 'התחבר'
+              )}
             </button>
           </div>
 
@@ -302,6 +361,21 @@ const Login: React.FC = () => {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="flex items-center justify-center">
+            <button
+              type="button"
+              onClick={handleResendVerificationCode}
+              className={`mt-2 text-sm ${
+                resendTimer > 0 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-blue-600 hover:text-blue-800'
+              }`}
+              disabled={resendTimer > 0}
+            >
+              שלח קוד חדש {resendTimer > 0 && `(${resendTimer})`}
+            </button>
           </div>
         </form>
       </div>

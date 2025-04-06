@@ -10,11 +10,90 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  direction: rtl;
+  text-align: right;
+  background-color: #f0f4f8 !important; /* Force light background color */
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* RTL overrides for margins/paddings */
+.ml-auto {
+  margin-left: 0 !important;
+  margin-right: auto !important;
+}
+
+.mr-auto {
+  margin-right: 0 !important;
+  margin-left: auto !important;
+}
+
+.ml-1, .ml-2, .ml-3, .ml-4, .ml-5, .ml-6, .ml-8, .ml-10 {
+  margin-left: 0 !important;
+  margin-right: 0.25rem !important;
+}
+
+.mr-1, .mr-2, .mr-3, .mr-4, .mr-5, .mr-6, .mr-8, .mr-10 {
+  margin-right: 0 !important;
+  margin-left: 0.25rem !important;
+}
+
+.pl-1, .pl-2, .pl-3, .pl-4, .pl-5, .pl-6, .pl-8, .pl-10 {
+  padding-left: 0 !important;
+  padding-right: 0.25rem !important;
+}
+
+.pr-1, .pr-2, .pr-3, .pr-4, .pr-5, .pr-6, .pr-8, .pr-10 {
+  padding-right: 0 !important;
+  padding-left: 0.25rem !important;
+}
+
+/* RTL text alignment for inputs */
+input, textarea, select {
+  text-align: right;
+}
+
+/* Fix for flex directions in Tailwind */
+.flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Enhanced styling for shadows */
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Make sure backgrounds stand out */
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+.bg-gray-50 {
+  background-color: #e2e8f0 !important; /* Darkened from #f9fafb to be more visible */
+}
+
+.bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+.bg-blue-50 {
+  background-color: #bfdbfe !important; /* Darkened from #eff6ff to be more visible */
+}
+
+/* Card styling enhancements */
+.rounded-lg {
+  border-radius: 0.5rem !important;
+}
+
+.hover\:shadow-lg:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Basic RTL setup */

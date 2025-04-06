@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../utils/supabaseClient';
-import axios from 'axios';
+import { authApi } from '../utils/api';
+import { AuthContext } from '../App';
+
+// Helper function to generate a random username
+const generateUsername = (email: string) => {
+  // Extract part before @ in email
+  const emailName = email.split('@')[0];
+  // Add a random 4-digit number
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  return `${emailName}${randomNum}`;
+};
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { register } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    username: ''
+    firstName: '',
+    lastName: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -23,65 +36,43 @@ const Register: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-
+    setMessage('');
+    setLoading(true);
+    
     try {
-      // Validate form data
-      if (!formData.email || !formData.password || !formData.username) {
+      // Validate all fields are present
+      if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
         throw new Error('נא למלא את כל השדות');
       }
-
-      // Register with Supabase Auth and include username in metadata
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
+      
+      // Register with our Auth API
+      const response = await register({
+        email: formData.email, 
         password: formData.password,
-        options: {
-          data: {
-            username: formData.username
-          }
-        }
+        name: `${formData.firstName} ${formData.lastName}`
       });
-
-      if (signUpError) {
-        throw signUpError;
-      }
-
-      // Create a profile for the user with is_verified = false
-      if (data.user) {
-        try {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
+      
+      console.log('Registration response:', response);
+      
+      if (response) {
+        setMessage('ההרשמה הצליחה! נשלח קוד אימות לאימייל שלך.');
+        setShowVerification(true);
+        
+        // Navigate to login page after registration
+        setTimeout(() => {
+          navigate('/login', { 
+            state: { 
+              message: 'ההרשמה הושלמה בהצלחה! נא לבדוק את האימייל שלך לקבלת קוד אימות.',
               email: formData.email,
-              username: formData.username,
-              is_verified: false
-            });
-          
-          if (profileError) {
-            console.error('שגיאה ביצירת פרופיל:', profileError);
-          }
-        } catch (profileErr) {
-          console.error('שגיאה ביצירת פרופיל:', profileErr);
-        }
+              showVerification: true
+            } 
+          });
+        }, 2000);
       }
-
-      // Send verification code
-      await axios.post('http://localhost:8000/api/v1/verification/send-code', { 
-        email: formData.email 
-      });
-
-      // Navigate to login page with verification state
-      navigate('/login', { 
-        state: { 
-          message: 'ההרשמה הושלמה בהצלחה! נא לבדוק את האימייל שלך לקבלת קוד אימות בן 6 ספרות.',
-          email: formData.email,
-          showVerification: true
-        } 
-      });
-    } catch (err: any) {
-      setError(err.message || 'שגיאה בתהליך ההרשמה');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setError(error.response?.data?.detail || error.message || 'שגיאה בהרשמה');
     } finally {
       setLoading(false);
     }
@@ -109,23 +100,6 @@ const Register: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div className="mb-4">
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                שם משתמש
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                autoComplete="username"
-                required
-                value={formData.username}
-                onChange={handleInputChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="הזן שם משתמש"
-              />
-            </div>
-            
-            <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 כתובת אימייל
               </label>
@@ -140,6 +114,38 @@ const Register: React.FC = () => {
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="הזן כתובת אימייל"
                 dir="ltr"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                שם פרטי
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="הזן שם פרטי"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                שם משפחה
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                autoComplete="family-name"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                placeholder="הזן שם משפחה"
               />
             </div>
             
@@ -177,14 +183,27 @@ const Register: React.FC = () => {
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
             בהרשמה אתה מסכים ל
-            <a href="#" className="font-medium text-blue-600 hover:text-blue-500 mx-1">
+            <Link 
+              to="/terms" 
+              className="font-medium text-blue-600 hover:text-blue-500 mx-1"
+              onClick={(e) => {
+                e.preventDefault();
+                alert('תנאי השימוש יהיו זמינים בקרוב');
+              }}
+            >
               תנאי השימוש
-            </a>
+            </Link>
             ול
-            <a href="#" className="font-medium text-blue-600 hover:text-blue-500 mx-1">
+            <Link 
+              to="/privacy" 
+              className="font-medium text-blue-600 hover:text-blue-500 mx-1"
+              onClick={(e) => {
+                e.preventDefault();
+                alert('מדיניות הפרטיות תהיה זמינה בקרוב');
+              }}
+            >
               מדיניות הפרטיות
-            </a>
-            שלנו
+            </Link>
           </p>
         </div>
       </div>

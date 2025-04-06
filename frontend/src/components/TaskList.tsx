@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import { taskListsApi } from '../utils/api';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 interface Task {
   title: string;
-  description: string;
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in_progress' | 'completed';
 }
@@ -16,27 +15,15 @@ const TaskList: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  const [listData, setListData] = useState({
-    title: '',
-    description: ''
-  });
+  const [listTitle, setListTitle] = useState('');
   
   const [tasks, setTasks] = useState<Task[]>([
     { 
       title: '', 
-      description: '', 
       priority: 'medium' as const, 
       status: 'pending' as const 
     }
   ]);
-
-  const handleListChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setListData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
   const handleTaskChange = (index: number, e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -49,17 +36,10 @@ const TaskList: React.FC = () => {
   };
 
   const addTask = () => {
-    if (tasks.length >= 10) {
-      setError('ניתן להוסיף עד 10 משימות בלבד.');
-      setTimeout(() => setError(''), 3000);
-      return;
-    }
-    
     setTasks([
       ...tasks, 
       { 
         title: '', 
-        description: '', 
         priority: 'medium', 
         status: 'pending' 
       }
@@ -83,7 +63,7 @@ const TaskList: React.FC = () => {
     setSuccess('');
 
     // Validate task list data
-    if (!listData.title.trim()) {
+    if (!listTitle.trim()) {
       setError('נדרשת כותרת לרשימת המשימות');
       setLoading(false);
       return;
@@ -98,58 +78,40 @@ const TaskList: React.FC = () => {
     }
 
     try {
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
+      // Create the task list with its tasks
+      const data = {
+        title: listTitle.trim(),
+        description: '', // Add empty description to ensure it's included
+        tasks: tasks.map(task => ({
+          title: task.title.trim(),
+          description: '', // Add empty description to ensure it's included
+          priority: task.priority || 'medium',
+          status: task.status || 'pending'
+        }))
+      };
       
-      if (!user) {
-        setError('עליך להיות מחובר כדי ליצור רשימת משימות');
-        setLoading(false);
-        return;
-      }
-
-      // Create the task list
-      const { data: taskList, error: listError } = await supabase
-        .from('task_lists')
-        .insert({
-          user_id: user.id,
-          title: listData.title,
-          description: listData.description
-        })
-        .select('id')
-        .single();
-
-      if (listError) {
-        throw listError;
-      }
-
-      // Create the tasks associated with the list
-      const tasksToInsert = tasks.map(task => ({
-        list_id: taskList.id,
-        title: task.title,
-        description: task.description,
-        priority: task.priority,
-        status: task.status
-      }));
-
-      const { error: tasksError } = await supabase
-        .from('tasks')
-        .insert(tasksToInsert);
-
-      if (tasksError) {
-        throw tasksError;
-      }
-
+      console.log('Sending task list data:', JSON.stringify(data));
+      
+      const result = await taskListsApi.createTaskList(data);
+      console.log('Task list created successfully:', result);
+      
       // Success message and reset form
       setSuccess('רשימת המשימות נוצרה בהצלחה!');
-      setListData({ title: '', description: '' });
-      setTasks([{ title: '', description: '', priority: 'medium', status: 'pending' }]);
+      setListTitle('');
+      setTasks([{ title: '', priority: 'medium', status: 'pending' }]);
       
       // Redirect to dashboard after a short delay
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
     } catch (err: any) {
-      setError(err.message || 'אירעה שגיאה בעת יצירת רשימת המשימות');
+      console.error('Error creating task list:', err);
+      // Log more detailed error information
+      console.error('Error response:', err.response?.data);
+      console.error('Error status:', err.response?.status);
+      console.error('Error headers:', err.response?.headers);
+      
+      setError(err.response?.data?.detail || err.message || 'אירעה שגיאה בעת יצירת רשימת המשימות');
     } finally {
       setLoading(false);
     }
@@ -216,43 +178,24 @@ const TaskList: React.FC = () => {
       
       <form onSubmit={handleSubmit}>
         <motion.div 
-          className="mb-6 border-b pb-6 rounded-lg p-4 bg-blue-50 shadow-sm"
+          className="mb-6 rounded-lg p-4 bg-blue-50 shadow-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <h3 className="text-xl font-semibold mb-4 flex items-center">
-            <span className="text-2xl mr-2">📝</span>
-            פרטי רשימת המשימות
-          </h3>
           <div className="mb-4">
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-              כותרת *
+              שם רשימת המשימות *
             </label>
             <input
               type="text"
               id="title"
               name="title"
-              value={listData.title}
-              onChange={handleListChange}
+              value={listTitle}
+              onChange={(e) => setListTitle(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              placeholder="הזן כותרת לרשימת המשימות"
+              placeholder="הזן שם לרשימת המשימות"
               required
-            />
-          </div>
-          
-          <div className="mb-4">
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-              תיאור
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={listData.description}
-              onChange={handleListChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-              placeholder="הזן תיאור לרשימת המשימות"
-              rows={3}
             />
           </div>
         </motion.div>
@@ -272,150 +215,110 @@ const TaskList: React.FC = () => {
               type="button"
               onClick={addTask}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-md flex items-center"
-              disabled={tasks.length >= 10}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <span className="text-xl mr-1">➕</span>
               הוסף משימה
-              <span className="ml-1 text-sm bg-white text-blue-600 rounded-full w-6 h-6 flex items-center justify-center">
-                {tasks.length}/10
-              </span>
             </motion.button>
           </div>
           
-          {tasks.map((task, index) => (
-            <motion.div 
-              key={index} 
-              className="mb-6 p-4 border border-gray-200 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow"
-              variants={taskVariants}
-              initial="hidden"
-              animate="visible"
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-            >
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-medium flex items-center">
-                  <span className="text-xl mr-2">🔹</span>
-                  משימה #{index + 1}
-                </h4>
-                <motion.button
+          <div className="space-y-4">
+            {tasks.map((task, index) => (
+              <motion.div 
+                key={index}
+                className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm relative"
+                variants={taskVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <button
                   type="button"
                   onClick={() => removeTask(index)}
-                  className="text-red-600 hover:text-red-800 focus:outline-none bg-red-50 hover:bg-red-100 px-2 py-1 rounded-full transition-colors flex items-center"
-                  disabled={tasks.length === 1}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
+                  className="absolute top-2 left-2 text-red-500 hover:text-red-700 focus:outline-none"
+                  title="הסר משימה"
                 >
-                  <span className="text-lg mr-1">🗑️</span>
-                  הסר
-                </motion.button>
-              </div>
-              
-              <div className="mb-3">
-                <label htmlFor={`task-title-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                  כותרת *
-                </label>
-                <input
-                  type="text"
-                  id={`task-title-${index}`}
-                  name="title"
-                  value={task.title}
-                  onChange={(e) => handleTaskChange(index, e)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  placeholder="הזן כותרת למשימה"
-                  required
-                />
-              </div>
-              
-              <div className="mb-3">
-                <label htmlFor={`task-description-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                  תיאור
-                </label>
-                <textarea
-                  id={`task-description-${index}`}
-                  name="description"
-                  value={task.description}
-                  onChange={(e) => handleTaskChange(index, e)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  placeholder="הזן תיאור למשימה"
-                  rows={2}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor={`task-priority-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                    עדיפות
+                  ❌
+                </button>
+                
+                <div className="mb-3">
+                  <label htmlFor={`task-${index}-title`} className="block text-sm font-medium text-gray-700 mb-1">
+                    שם משימה *
                   </label>
-                  <div className="relative">
+                  <input
+                    type="text"
+                    id={`task-${index}-title`}
+                    name="title"
+                    value={task.title}
+                    onChange={(e) => handleTaskChange(index, e)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="הזן שם משימה"
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor={`task-${index}-priority`} className="block text-sm font-medium text-gray-700 mb-1">
+                      עדיפות
+                    </label>
                     <select
-                      id={`task-priority-${index}`}
+                      id={`task-${index}-priority`}
                       name="priority"
                       value={task.priority}
                       onChange={(e) => handleTaskChange(index, e)}
-                      className={`w-full px-3 py-2 border ${getPriorityDisplay(task.priority).color} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none shadow-sm`}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="low">נמוכה 🙂</option>
                       <option value="medium">בינונית 😐</option>
                       <option value="high">גבוהה 😬</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                      </svg>
-                    </div>
                   </div>
-                </div>
-                
-                <div>
-                  <label htmlFor={`task-status-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                    סטטוס
-                  </label>
-                  <div className="relative">
+                  
+                  <div>
+                    <label htmlFor={`task-${index}-status`} className="block text-sm font-medium text-gray-700 mb-1">
+                      סטטוס
+                    </label>
                     <select
-                      id={`task-status-${index}`}
+                      id={`task-${index}-status`}
                       name="status"
                       value={task.status}
                       onChange={(e) => handleTaskChange(index, e)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none shadow-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="pending">ממתין ⏳</option>
-                      <option value="in_progress">בתהליך 🔄</option>
-                      <option value="completed">הושלם ✅</option>
+                      <option value="pending">ממתין</option>
+                      <option value="in_progress">בתהליך</option>
+                      <option value="completed">הושלם</option>
                     </select>
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 text-gray-700">
-                      <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                        <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                      </svg>
-                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
         
-        <div className="flex justify-center">
+        <div className="mt-8 text-center">
           <motion.button
             type="submit"
-            className="px-6 py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg text-lg font-medium flex items-center"
+            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             disabled={loading}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             {loading ? (
-              <>
+              <span className="flex items-center justify-center">
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                מעבד...
-              </>
+                שומר...
+              </span>
             ) : (
-              <>
-                <span className="text-xl mr-2">✨</span>
-                צור רשימת משימות
-              </>
+              <span className="flex items-center justify-center">
+                <span className="text-xl mr-2">💾</span>
+                שמור רשימת משימות
+              </span>
             )}
           </motion.button>
         </div>

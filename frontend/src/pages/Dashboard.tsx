@@ -1,7 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { authApi, taskListsApi, tasksApi } from '../utils/api';
+import { AuthContext } from '../App';
+
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  priority: string;
+  status: string;
+  due_date?: string;
+}
 
 interface TaskList {
   id: string;
@@ -14,105 +24,51 @@ interface TaskList {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [taskLists, setTaskLists] = useState<TaskList[]>([]);
-  const [userName, setUserName] = useState<string>('');
+  const [userFirstName, setUserFirstName] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUserAndTaskLists = async () => {
+    const fetchTaskLists = async () => {
       try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
+        setLoading(true);
         
-        if (!user) {
-          navigate('/login');
-          return;
+        if (user) {
+          // Set first name from the user context
+          if (user.name) {
+            // Extract first name from the full name
+            const firstName = user.name.split(' ')[0];
+            setUserFirstName(firstName || '');
+          }
+
+          // Get user's task lists
+          const response = await taskListsApi.getTaskLists();
+          setTaskLists(response);
         }
-
-        // Get user profile
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', user.id)
-          .single();
-
-        if (profileData) {
-          setUserName(profileData.username);
-        }
-
-        // Get user's task lists
-        const { data: listsData, error: listsError } = await supabase
-          .from('task_lists')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (listsError) {
-          console.error('שגיאה בטעינת רשימות המשימות:', listsError);
-          return;
-        }
-
-        // If there are no task lists, we're done
-        if (!listsData || listsData.length === 0) {
-          setTaskLists([]);
-          setLoading(false);
-          return;
-        }
-
-        // For each task list, count the total tasks and completed tasks
-        const taskListsWithCounts = await Promise.all(
-          listsData.map(async (list) => {
-            // Get total tasks
-            const { count: totalCount, error: totalCountError } = await supabase
-              .from('tasks')
-              .select('*', { count: 'exact', head: true })
-              .eq('list_id', list.id);
-            
-            if (totalCountError) {
-              console.error(`שגיאה בספירת משימות לרשימה ${list.id}:`, totalCountError);
-              return { ...list, task_count: 0, completed_count: 0 };
-            }
-            
-            // Get completed tasks
-            const { count: completedCount, error: completedCountError } = await supabase
-              .from('tasks')
-              .select('*', { count: 'exact', head: true })
-              .eq('list_id', list.id)
-              .eq('status', 'completed');
-            
-            if (completedCountError) {
-              console.error(`שגיאה בספירת משימות שהושלמו לרשימה ${list.id}:`, completedCountError);
-              return { ...list, task_count: totalCount || 0, completed_count: 0 };
-            }
-            
-            return { 
-              ...list, 
-              task_count: totalCount || 0,
-              completed_count: completedCount || 0
-            };
-          })
-        );
-
-        setTaskLists(taskListsWithCounts);
       } catch (error) {
-        console.error('שגיאה:', error);
+        console.error('Error fetching task lists:', error);
+        setError('אירעה שגיאה בטעינת רשימות המשימות');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserAndTaskLists();
-  }, [navigate]);
+    fetchTaskLists();
+  }, [user]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await authApi.logout();
     navigate('/login');
+    // Refresh to clear state
+    window.location.reload();
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">ברוך הבא, {userName || 'משתמש'}!</h1>
+        <h1 className="text-2xl font-bold">ברוך הבא {userFirstName}!</h1>
         <button
           onClick={handleLogout}
           className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700"
@@ -124,12 +80,20 @@ const Dashboard: React.FC = () => {
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">רשימות המשימות שלך</h2>
-          <Link
-            to="/create-task-list"
-            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
-          >
-            צור רשימת משימות חדשה
-          </Link>
+          <div className="space-x-2 rtl:space-x-reverse">
+            <Link
+              to="/task-list"
+              className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            >
+              צור רשימת משימות חדשה
+            </Link>
+            <Link
+              to="/simple-task-list"
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-200"
+            >
+              יצירת רשימה פשוטה
+            </Link>
+          </div>
         </div>
 
         {loading ? (
@@ -138,7 +102,7 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <p className="text-gray-600 mb-4">אין לך עדיין רשימות משימות.</p>
             <Link
-              to="/create-task-list"
+              to="/task-list"
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
             >
               צור את רשימת המשימות הראשונה שלך

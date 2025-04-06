@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users(id) PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     username TEXT UNIQUE NOT NULL,
-    full_name TEXT,
+    first_name TEXT,
+    last_name TEXT,
     is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
@@ -145,8 +146,22 @@ DROP FUNCTION IF EXISTS public.handle_new_user();
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.profiles (id, email, username)
-    VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'username');
+    INSERT INTO public.profiles (
+        id, 
+        email, 
+        username, 
+        first_name, 
+        last_name,
+        is_verified
+    )
+    VALUES (
+        NEW.id, 
+        NEW.email, 
+        COALESCE(NEW.raw_user_meta_data->>'username', 'user_' || substring(NEW.id::text, 1, 8)),
+        NEW.raw_user_meta_data->>'firstName',
+        NEW.raw_user_meta_data->>'lastName',
+        FALSE
+    );
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

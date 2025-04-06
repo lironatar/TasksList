@@ -18,7 +18,7 @@ const LandingPage: React.FC = () => {
       </nav>
 
       {/* Hero Section */}
-      <div className="bg-blue-50 py-20">
+      <div className="bg-blue-50 py-20" style={{backgroundColor: '#bfdbfe'}}>
         <div className="container mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 order-2 md:order-1">
@@ -51,31 +51,49 @@ const LandingPage: React.FC = () => {
       </div>
 
       {/* Features Section */}
-      <div id="features" className="py-20">
-        <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">תכונות מרכזיות</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="text-4xl text-blue-600 mb-4">📋</div>
-              <h3 className="text-xl font-semibold mb-4">רשימות משימות מרובות</h3>
-              <p className="text-gray-600">יצירת רשימות משימות מרובות לארגון טוב יותר של המשימות לפי פרויקטים, נושאים ותחומי חיים.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="text-4xl text-blue-600 mb-4">🔔</div>
-              <h3 className="text-xl font-semibold mb-4">אימות אימייל</h3>
-              <p className="text-gray-600">אבטחה מתקדמת עם אימות אימייל להגנה על החשבון שלך ועל המידע האישי שלך.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="text-4xl text-blue-600 mb-4">🔄</div>
-              <h3 className="text-xl font-semibold mb-4">עדכון סטטוס</h3>
-              <p className="text-gray-600">עקוב אחר התקדמות המשימות שלך עם עדכון סטטוס פשוט ומהיר.</p>
+      <section className="py-12 bg-gray-50" style={{backgroundColor: '#e2e8f0'}}>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-3">תכונות מרכזיות</h2>
+          </div>
+          <div className="mt-10">
+            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="bg-white p-6 rounded-lg shadow-md" style={{boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}>
+                <div className="w-12 h-12 flex items-center justify-center bg-blue-100 text-blue-600 rounded-md mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">רשימות משימות מרובות</h3>
+                <p className="text-gray-600">צור וארגן רשימות משימות מרובות לפרויקטים שונים או תחומי עניין.</p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md" style={{boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}>
+                <div className="w-12 h-12 flex items-center justify-center bg-green-100 text-green-600 rounded-md mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">אימות אימייל</h3>
+                <p className="text-gray-600">אבטחה משופרת עם אימות אימייל לשמירה על חשבונך.</p>
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md" style={{boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'}}>
+                <div className="w-12 h-12 flex items-center justify-center bg-purple-100 text-purple-600 rounded-md mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold mb-2">עדכון סטטוס</h3>
+                <p className="text-gray-600">עקוב אחר התקדמות המשימות שלך עם עדכוני סטטוס בזמן אמת.</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* How It Works Section */}
-      <div className="bg-gray-50 py-20">
+      <div className="bg-gray-50 py-20" style={{backgroundColor: '#e2e8f0'}}>
         <div className="container mx-auto px-6">
           <h2 className="text-3xl font-bold text-center mb-12">איך זה עובד</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">

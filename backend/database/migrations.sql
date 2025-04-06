@@ -6,6 +6,39 @@ ADD COLUMN IF NOT EXISTS is_used BOOLEAN DEFAULT FALSE;
 ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE;
 
+-- Migration to add first_name and last_name columns to profiles table
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS first_name TEXT,
+ADD COLUMN IF NOT EXISTS last_name TEXT;
+
+-- Migration to remove redundant full_name column if it exists
+ALTER TABLE public.profiles 
+DROP COLUMN IF EXISTS full_name;
+
+-- Update the handle_new_user function to include first_name and last_name
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (
+        id, 
+        email, 
+        username, 
+        first_name, 
+        last_name,
+        is_verified
+    )
+    VALUES (
+        NEW.id, 
+        NEW.email, 
+        COALESCE(NEW.raw_user_meta_data->>'username', 'user_' || substring(NEW.id::text, 1, 8)), 
+        NEW.raw_user_meta_data->>'firstName',
+        NEW.raw_user_meta_data->>'lastName',
+        FALSE
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Update or create the generate_verification_code function
 CREATE OR REPLACE FUNCTION public.generate_verification_code()
 RETURNS TEXT AS $$

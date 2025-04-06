@@ -1,15 +1,58 @@
-# Dependencies
-/node_modules
-/frontend/node_modules
-/.pnp
-.pnp.js
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+.env
+
+# Frontend
+node_modules/
+/frontend/node_modules/
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/coverage
+/frontend/build
+/frontend/.DS_Store
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
 
 # Testing
 /coverage
-
-# Production
-/build
-/frontend/build
 
 # Backend
 /backend/venv
@@ -19,24 +62,13 @@
 /backend/.env
 
 # misc
-.DS_Store
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-*.log
-
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw? 
+*.log 

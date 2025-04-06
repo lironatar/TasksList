@@ -1,67 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { supabase } from '../utils/supabaseClient';
+import React, { useContext } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { AuthContext } from '../App';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check if user is logged in
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          setIsAuthenticated(false);
-          setLoading(false);
-          return;
-        }
-        
-        setIsAuthenticated(true);
-        
-        // Check if user's email is verified
-        const { data: profileData, error } = await supabase
-          .from('profiles')
-          .select('is_verified')
-          .eq('id', user.id)
-          .single();
-        
-        if (error) {
-          console.error('Error fetching profile:', error);
-          setLoading(false);
-          return;
-        }
-        
-        setIsVerified(profileData?.is_verified || false);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error checking authentication:', error);
-        setIsAuthenticated(false);
-        setLoading(false);
-      }
-    };
-    
-    checkAuth();
-  }, []);
+  const { loading, user } = useContext(AuthContext);
+  const location = useLocation();
   
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return <div className="flex justify-center items-center h-screen">טוען...</div>;
   }
   
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  if (!user) {
+    // Redirect to login if not authenticated
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   
-  if (!isVerified) {
-    return <Navigate to="/login" state={{ needsVerification: true }} replace />;
-  }
-  
+  // No need to check is_verified, the backend auth check handles this
   return <>{children}</>;
 };
 

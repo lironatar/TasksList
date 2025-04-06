@@ -1,120 +1,88 @@
-# TaskList - משימות
+# TasksList Application
 
-A task management application with RTL support, designed for Hebrew speakers.
+A full-stack web application for managing tasks and task lists. Built with FastAPI (Python) for the backend and React (TypeScript) for the frontend.
 
 ## Features
 
-- Multiple task lists management
-- Task priority and status tracking
-- Progress visualization
-- User authentication
-- Email verification
-- Responsive RTL design
-- Real-time task updates
-- Confetti animation for completed tasks
+- User registration and authentication with email verification
+- Create, read, update, and delete task lists
+- Add, update, and delete tasks within task lists
+- Task priority and status management
+- Dashboard for viewing all task lists and task counts
 
-## Setup
+## Technology Stack
+
+### Backend
+- FastAPI framework
+- PostgreSQL database
+- JWT authentication
+- Password hashing with bcrypt (via passlib)
+- Email verification
+
+### Frontend
+- React with TypeScript
+- React Router for navigation
+- Bootstrap for styling
+- Axios for API communication
+
+## Project Structure
+
+```
+TasksList/
+├── backend/               # FastAPI backend
+│   ├── routes/            # API endpoints
+│   ├── main.py            # Application entry point
+│   ├── auth_service.py    # Authentication service
+│   ├── email_service.py   # Email service
+│   └── db_config.py       # Database configuration
+├── frontend/              # React frontend
+│   ├── public/            # Static assets
+│   └── src/               # Source code
+│       ├── components/    # React components
+│       ├── pages/         # Page components
+│       └── utils/         # Utility functions
+```
+
+## Getting Started
 
 ### Prerequisites
-
-- Node.js (v14 or later)
-- Python (v3.8 or later)
-- npm or yarn
-- PostgreSQL database (or Supabase account)
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```
-   npm install
-   ```
-
-3. Create a `.env` file in the frontend directory with your Supabase credentials:
-   ```
-   REACT_APP_SUPABASE_URL=your_supabase_url
-   REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-4. Start the development server:
-   ```
-   npm start
-   ```
+- Python 3.8+
+- Node.js 14+
+- PostgreSQL
 
 ### Backend Setup
-
 1. Navigate to the backend directory:
    ```
    cd backend
    ```
-
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   
-   # On Windows
-   .\venv\Scripts\activate
-   
-   # On macOS/Linux
-   source venv/bin/activate
-   ```
-
-3. Install dependencies:
+2. Install dependencies:
    ```
    pip install -r requirements.txt
    ```
-
-4. Create a `.env` file in the backend directory with your database credentials:
+3. Create a `.env` file based on `.env.template`
+4. Run the application:
    ```
-   DATABASE_URL=your_database_connection_string
-   SECRET_KEY=your_secret_key
-   ```
-
-5. Start the backend server:
-   ```
-   uvicorn main:app --reload
+   python main.py
    ```
 
-### Running Full Application
+### Frontend Setup
+1. Navigate to the frontend directory:
+   ```
+   cd frontend
+   ```
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Run the development server:
+   ```
+   npm start
+   ```
 
-For convenience, you can run both frontend and backend using the dev script:
+## API Documentation
 
-```
-cd frontend
-npm run dev
-```
+Once the backend server is running, you can access the Swagger documentation at `/docs` endpoint.
 
-## Frontend Dependencies
+## License
 
-- React
-- React Router
-- Supabase Client
-- Framer Motion (animations)
-- React Confetti
-- Tailwind CSS
-
-## Backend Dependencies
-
-- FastAPI
-- SQLAlchemy
-- Pydantic
-- Uvicorn
-- Python-jose (JWT)
-- Passlib
-- Email-validator
-
-## Deployment
-
-Instructions for deploying to production will be added soon.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request 
+[MIT](LICENSE) 
