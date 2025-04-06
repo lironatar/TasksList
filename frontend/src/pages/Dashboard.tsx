@@ -71,8 +71,9 @@ const Dashboard: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto p-6" style={{ direction: 'rtl' }}>
       <div className="flex items-center mb-8">
+        <h1 className="text-2xl font-bold">ברוך הבא {userFirstName}!</h1>
         <div 
-          className="relative cursor-pointer mr-2"
+          className="relative cursor-pointer mr-3"
           onMouseEnter={() => setShowIconEdit(true)}
           onMouseLeave={() => setShowIconEdit(false)}
           onClick={() => setShowProfileIconSelector(true)}
@@ -89,7 +90,6 @@ const Dashboard: React.FC = () => {
             </div>
           )}
         </div>
-        <h1 className="text-2xl font-bold mr-3">ברוך הבא {userFirstName}!</h1>
       </div>
 
       <div className="mb-6">

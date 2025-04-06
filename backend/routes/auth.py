@@ -74,7 +74,8 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         
         # Get user from database with is_verified from profiles table
         query = """
-        SELECT u.id, u.email, u.username, u.raw_user_meta_data, p.is_verified
+        SELECT u.id, u.email, u.username, u.raw_user_meta_data, p.is_verified, 
+               p.first_name, p.last_name, COALESCE(u.profile_icon, p.profile_icon) as profile_icon
         FROM users u
         JOIN profiles p ON u.id = p.id
         WHERE u.id = %s
@@ -91,26 +92,32 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         if not user.get("is_verified", False):
             raise HTTPException(status_code=401, detail="Email not verified")
         
-        # Format the user data for the response
-        user_name = user.get('username', '')
-        try:
-            if user.get('raw_user_meta_data'):
+        # Get first name from profiles directly if available
+        first_name = user.get('first_name', '')
+        last_name = user.get('last_name', '')
+
+        # If not available, try to get from metadata
+        if (not first_name or not last_name) and user.get('raw_user_meta_data'):
+            try:
                 import json
                 if isinstance(user['raw_user_meta_data'], str):
                     metadata = json.loads(user['raw_user_meta_data'])
-                    if metadata.get('firstName') and metadata.get('lastName'):
-                        # Use ASCII-only characters for the name to avoid encoding issues
+                    if not first_name and metadata.get('firstName'):
                         first_name = str(metadata.get('firstName')).encode('ascii', 'ignore').decode('ascii')
+                    if not last_name and metadata.get('lastName'):
                         last_name = str(metadata.get('lastName')).encode('ascii', 'ignore').decode('ascii')
-                        user_name = f"{first_name} {last_name}"
-        except Exception as e:
-            print(f"Error parsing user metadata: {e}")
+            except Exception as e:
+                print(f"Error parsing user metadata: {e}")
+        
+        # Combine first and last name
+        user_name = f"{first_name} {last_name}".strip() or user.get('username', '')
         
         return {
             "id": user["id"],
             "email": user["email"],
             "name": user_name,
-            "profile_icon": ""  # Default empty value since column doesn't exist
+            "first_name": first_name,
+            "profile_icon": user.get("profile_icon", "")
         }
     except Exception as e:
         print(f"Authentication error: {str(e)}")

@@ -16,6 +16,7 @@ interface AuthContextType {
     id: string;
     email: string;
     name: string;
+    first_name?: string;
     profile_icon?: string;
   } | null;
   loading: boolean;
