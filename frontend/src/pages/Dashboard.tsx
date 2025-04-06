@@ -40,8 +40,11 @@ const Dashboard: React.FC = () => {
         
         if (user) {
           // Set first name from the user context
-          if (user.name) {
-            // Extract first name from the full name
+          if (user.first_name) {
+            // Directly use first_name if available
+            setUserFirstName(user.first_name);
+          } else if (user.name) {
+            // Fallback to splitting full name
             const firstName = user.name.split(' ')[0];
             setUserFirstName(firstName || '');
           }
