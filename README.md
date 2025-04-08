@@ -50,7 +50,41 @@ TasksList/
 - Node.js 14+
 - PostgreSQL
 
-### Backend Setup
+### Automatic Setup (Recommended)
+We provide convenient setup scripts that automate the installation process:
+
+#### For Windows Users:
+```
+setup.bat
+```
+
+#### For macOS/Linux Users:
+```
+chmod +x setup.sh
+./setup.sh
+```
+
+For detailed setup instructions, refer to [SETUP.md](SETUP.md).
+
+### Starting the Application
+After installation, you can start both the backend and frontend servers simultaneously:
+
+#### For Windows Users:
+```
+start_app.bat
+```
+
+#### For macOS/Linux Users:
+```
+chmod +x start_app.sh
+./start_app.sh
+```
+
+### Manual Setup
+
+Alternatively, you can set up and run the application manually:
+
+#### Backend Setup
 1. Navigate to the backend directory:
    ```
    cd backend
@@ -65,7 +99,7 @@ TasksList/
    python main.py
    ```
 
-### Frontend Setup
+#### Frontend Setup
 1. Navigate to the frontend directory:
    ```
    cd frontend
