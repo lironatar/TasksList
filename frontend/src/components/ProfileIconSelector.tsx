@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { userApi } from '../utils/api';
+import { CircularProgress } from '@mui/material';
 
-// Available profile icons
-const PROFILE_ICONS = [
+// Default icons as fallback
+const DEFAULT_ICONS = [
   'https://img.icons8.com/color/96/user-male-circle--v1.png',
   'https://img.icons8.com/color/96/user-female-circle--v1.png',
-  'https://img.icons8.com/fluency/96/user-male-circle.png',
-  'https://img.icons8.com/fluency/96/user-female-circle.png',
-  'https://img.icons8.com/bubbles/100/user-male.png',
-  'https://img.icons8.com/bubbles/100/user-female.png',
-  'https://img.icons8.com/emoji/96/person-superhero.png',
-  'https://img.icons8.com/emoji/96/detective.png'
+  'https://img.icons8.com/fluency/96/user-male-circle.png'
 ];
+
+interface ProfileIcon {
+  id: string;
+  path: string;
+  label: string;
+}
 
 interface ProfileIconSelectorProps {
   currentIcon: string;
@@ -25,6 +28,27 @@ const ProfileIconSelector: React.FC<ProfileIconSelectorProps> = ({
   onClose
 }) => {
   const [selectedIcon, setSelectedIcon] = useState<string>(currentIcon);
+  const [icons, setIcons] = useState<ProfileIcon[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const baseUrl = 'http://localhost:8000';
+  
+  useEffect(() => {
+    const fetchIcons = async () => {
+      try {
+        setIsLoading(true);
+        const data = await userApi.getProfileIcons();
+        setIcons(data);
+      } catch (error) {
+        console.error('Failed to fetch profile icons:', error);
+        // Use default icons as fallback
+        setIcons([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchIcons();
+  }, []);
 
   const handleSelect = (icon: string) => {
     setSelectedIcon(icon);
@@ -33,6 +57,17 @@ const ProfileIconSelector: React.FC<ProfileIconSelectorProps> = ({
   const handleSave = () => {
     onSelect(selectedIcon);
     onClose();
+  };
+
+  // Helper function to get the correct image URL
+  const getImageUrl = (path: string) => {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    } else if (path.startsWith('/api/v1')) {
+      return `${baseUrl}${path}`;
+    } else {
+      return path;
+    }
   };
 
   return (
@@ -55,25 +90,52 @@ const ProfileIconSelector: React.FC<ProfileIconSelectorProps> = ({
         </button>
       </div>
       
-      <div className="grid grid-cols-4 gap-3 mb-4">
-        {PROFILE_ICONS.map((icon, index) => (
-          <div
-            key={index}
-            className={`w-12 h-12 rounded-full overflow-hidden cursor-pointer border-2 transition-all ${
-              selectedIcon === icon 
-                ? 'border-blue-500 scale-110' 
-                : 'border-transparent hover:border-gray-300'
-            }`}
-            onClick={() => handleSelect(icon)}
-          >
-            <img
-              src={icon}
-              alt={`Profile icon ${index + 1}`}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-4">
+          <CircularProgress size={24} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-3 mb-4">
+          {/* Show backend icons if available, otherwise use default */}
+          {icons.length > 0 ? (
+            icons.map((icon) => (
+              <div
+                key={icon.id}
+                className={`w-12 h-12 rounded-full overflow-hidden cursor-pointer border-2 transition-all ${
+                  selectedIcon === icon.path 
+                    ? 'border-blue-500 scale-110' 
+                    : 'border-transparent hover:border-gray-300'
+                }`}
+                onClick={() => handleSelect(icon.path)}
+              >
+                <img
+                  src={getImageUrl(icon.path)}
+                  alt={icon.label}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))
+          ) : (
+            DEFAULT_ICONS.map((icon, index) => (
+              <div
+                key={index}
+                className={`w-12 h-12 rounded-full overflow-hidden cursor-pointer border-2 transition-all ${
+                  selectedIcon === icon 
+                    ? 'border-blue-500 scale-110' 
+                    : 'border-transparent hover:border-gray-300'
+                }`}
+                onClick={() => handleSelect(icon)}
+              >
+                <img
+                  src={icon}
+                  alt={`Profile icon ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       <div className="flex justify-end">
         <button

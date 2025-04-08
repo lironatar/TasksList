@@ -94,48 +94,24 @@ def register_user(email, password, username=None, first_name=None, last_name=Non
 def login_user(email, password):
     """Authenticate a user and generate JWT token"""
     try:
-        # First get user details
-        query = """
-        SELECT u.id, u.email, u.username, u.raw_user_meta_data, u.password, p.is_verified
-        FROM users u
-        JOIN profiles p ON u.id = p.id
-        WHERE u.email = %s
-        """
-        result = execute_query(query, (email,))
-        
-        if not result or len(result) == 0:
-            print(f"User with email {email} not found")
+        # Get user from database
+        user = get_user_by_email(email)
+        if not user:
             return None
-            
-        user = result[0]
         
-        # Verify password using our hybrid verification method
+        # Verify password
         if not verify_password(password, user['password']):
-            print("Password verification failed")
             return None
         
-        # Check if user is verified using is_verified column from profiles table
+        # Check if user is verified
         if not user.get('is_verified', False):
-            print(f"User {email} is not verified")
-            return {
-                'needsVerification': True,
-                'message': 'User not verified'
-            }
+            return None
         
-        # Try to parse user metadata if it exists
-        user_name = user.get('username', '')
-        try:
-            if user.get('raw_user_meta_data'):
-                import json
-                if isinstance(user['raw_user_meta_data'], str):
-                    metadata = json.loads(user['raw_user_meta_data'])
-                    if metadata.get('firstName') and metadata.get('lastName'):
-                        # Use ASCII-only characters for the name to avoid encoding issues
-                        first_name = str(metadata.get('firstName')).encode('ascii', 'ignore').decode('ascii')
-                        last_name = str(metadata.get('lastName')).encode('ascii', 'ignore').decode('ascii')
-                        user_name = f"{first_name} {last_name}"
-        except Exception as e:
-            print(f"Error parsing user metadata: {e}")
+        # Get user's name
+        user_name = user.get('name', '')
+        
+        # Get user's profile icon
+        profile_icon = user.get('profile_icon', '')
         
         # Generate JWT token
         payload = {
@@ -152,7 +128,7 @@ def login_user(email, password):
                 'id': user['id'],
                 'email': user['email'],
                 'name': user_name,
-                'profile_icon': ''  # Default empty value since column doesn't exist
+                'profile_icon': profile_icon
             },
             'session': {
                 'access_token': token
@@ -319,4 +295,23 @@ def verify_password(plain_password, hashed_password):
         print(f"SHA-256 verification failed: {e}")
     
     # All verification methods failed
-    return False 
+    return False
+
+def get_user_by_email(email):
+    """Get user by email"""
+    try:
+        query = """
+        SELECT u.id, u.email, u.username, u.raw_user_meta_data, u.password, u.profile_icon, p.is_verified
+        FROM users u
+        JOIN profiles p ON u.id = p.id
+        WHERE u.email = %s
+        """
+        result = execute_query(query, (email,))
+        
+        if not result or len(result) == 0:
+            return None
+            
+        return result[0]
+    except Exception as e:
+        print(f"Error getting user by email: {e}")
+        return None 

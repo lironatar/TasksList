@@ -79,6 +79,19 @@ def create_tables():
     """
     execute_query(tasks_query, fetch=False)
     print("Tasks table created or already exists")
+    
+    # Create profile_icons table
+    profile_icons_query = """
+    CREATE TABLE IF NOT EXISTS profile_icons (
+        id VARCHAR(36) PRIMARY KEY,
+        filename VARCHAR(255) NOT NULL,
+        path VARCHAR(255) NOT NULL, 
+        label VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """
+    execute_query(profile_icons_query, fetch=False)
+    print("Profile icons table created or already exists")
 
 if __name__ == "__main__":
     print("Creating database tables...")

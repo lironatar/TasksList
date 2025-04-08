@@ -12,6 +12,7 @@ import subprocess
 from routes.auth import router as auth_router
 from routes.task_lists import router as task_lists_router
 from routes.users import router as users_router
+from routes.admin import router as admin_router
 # Import other routes...
 
 # Load environment variables
@@ -33,10 +34,17 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(task_lists_router)
 app.include_router(users_router)
+app.include_router(admin_router)
 # Include other routers...
 
 # Mount static files
-app.mount("/profile-icons", StaticFiles(directory="public/profile-icons"), name="profile-icons")
+# Ensure directories exist
+os.makedirs("public/profile-icons", exist_ok=True)
+os.makedirs("public/profile-images", exist_ok=True)
+
+# Mount static directories with correct paths
+app.mount("/api/v1/profile-icons", StaticFiles(directory="public/profile-icons"), name="profile-icons")
+app.mount("/api/v1/profile-images", StaticFiles(directory="public/profile-images"), name="profile-images")
 
 # Include verification routes
 app.include_router(verification.router, prefix="/api/v1/verification", tags=["verification"])

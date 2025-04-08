@@ -1,5 +1,6 @@
 import React, { useEffect, useState, createContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { SnackbarProvider } from 'notistack';
 import { authApi } from './utils/api';
 import './App.css';
 import Login from './pages/Login';
@@ -9,6 +10,8 @@ import TaskList from './components/TaskList';
 import Register from './pages/Register';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
+import AdminDashboard from './pages/AdminDashboard';
+import Profile from './pages/Profile';
 
 // Define AuthContext interface
 interface AuthContextType {
@@ -137,47 +140,59 @@ function App() {
   };
 
   return (
-    <AuthContext.Provider value={authContextValue}>
-      <div className="App" style={{backgroundColor: '#f0f4f8', minHeight: '100vh'}}>
-        <Router>
-          <main className="content-wrapper">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Navbar />
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route 
-                path="/task-list/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Navbar />
-                    <TaskListDetail />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/task-list" 
-                element={
-                  <ProtectedRoute>
-                    <Navbar />
-                    <TaskList />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </Router>
-      </div>
-    </AuthContext.Provider>
+    <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+      <AuthContext.Provider value={authContextValue}>
+        <div className="App" style={{backgroundColor: '#f0f4f8', minHeight: '100vh'}}>
+          <Router>
+            <main className="content-wrapper">
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute>
+                      <Navbar />
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Navbar />
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route 
+                  path="/task-list/:id" 
+                  element={
+                    <ProtectedRoute>
+                      <Navbar />
+                      <TaskListDetail />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/task-list" 
+                  element={
+                    <ProtectedRoute>
+                      <Navbar />
+                      <TaskList />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </Router>
+        </div>
+      </AuthContext.Provider>
+    </SnackbarProvider>
   );
 }
 

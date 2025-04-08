@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from routes.auth import get_current_user
 from db_config import execute_query
 
@@ -87,4 +87,27 @@ async def get_profile(user = Depends(get_current_user)):
         "email": user["email"],
         "name": user["name"],
         "profile_icon": user.get("profile_icon", "")
-    } 
+    }
+
+class ProfileIcon(BaseModel):
+    id: str
+    path: str
+    label: str
+
+@router.get("/profile-icons", response_model=List[ProfileIcon])
+async def get_profile_icons():
+    """Get all available profile icons for users to choose from"""
+    try:
+        query = """
+        SELECT id, path, label FROM profile_icons
+        ORDER BY created_at DESC
+        """
+        
+        try:
+            result = execute_query(query)
+            return result
+        except Exception as e:
+            # Table might not exist yet
+            return []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch profile icons: {str(e)}") 

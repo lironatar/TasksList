@@ -271,6 +271,7 @@ const Login: React.FC = () => {
               disabled={showVerification}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               dir="ltr"
+              placeholder="הזן את כתובת האימייל שלך"
             />
           </div>
 
@@ -289,6 +290,7 @@ const Login: React.FC = () => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 dir="ltr"
+                placeholder="הזן את הסיסמה שלך"
               />
             </div>
           ) : (

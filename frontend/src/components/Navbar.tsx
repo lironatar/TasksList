@@ -54,6 +54,12 @@ const Navbar: React.FC = () => {
                   >
                     לוח בקרה
                   </Link>
+                  <Link 
+                    to="/profile" 
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+                  >
+                    פרופיל
+                  </Link>
                   <div className="relative ml-3">
                     <div className="flex items-center">
                       <button
@@ -156,6 +162,12 @@ const Navbar: React.FC = () => {
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
                   >
                     לוח בקרה
+                  </Link>
+                  <Link 
+                    to="/profile" 
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-500"
+                  >
+                    פרופיל
                   </Link>
                   <div className="flex justify-between items-center px-3 py-2">
                     <div className="flex items-center">

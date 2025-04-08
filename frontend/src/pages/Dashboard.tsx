@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { taskListsApi } from '../utils/api';
 import { AuthContext } from '../App';
 import ProfileIcon from '../components/ProfileIcon';
+import ProfileIconSelector from '../components/ProfileIconSelector';
 
 interface Task {
   id: string;
@@ -177,35 +178,11 @@ const Dashboard: React.FC = () => {
       {showProfileIconSelector && user && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" onClick={() => setShowProfileIconSelector(false)}>
           <div onClick={(e) => e.stopPropagation()}>
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4 text-center">בחר סמל פרופיל</h3>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                {['https://img.icons8.com/color/96/user-male-circle--v1.png',
-                  'https://img.icons8.com/color/96/user-female-circle--v1.png',
-                  'https://img.icons8.com/color/96/user-male-skin-type-3--v1.png',
-                  'https://img.icons8.com/color/96/user-female-skin-type-3--v1.png',
-                  'https://img.icons8.com/plasticine/100/cat-profile.png',
-                  'https://img.icons8.com/plasticine/100/dog-profile.png',
-                  'https://img.icons8.com/office/80/year-of-tiger.png',
-                  'https://img.icons8.com/office/80/year-of-ox.png'].map((icon, index) => (
-                  <div 
-                    key={index}
-                    className={`cursor-pointer p-2 border rounded-lg ${user.profile_icon === icon ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
-                    onClick={() => handleProfileIconChange(icon)}
-                  >
-                    <img src={icon} alt={`Profile icon ${index + 1}`} className="w-full" />
-                  </div>
-                ))}
-              </div>
-              <div className="text-center">
-                <button
-                  onClick={() => setShowProfileIconSelector(false)}
-                  className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 text-gray-800"
-                >
-                  סגור
-                </button>
-              </div>
-            </div>
+            <ProfileIconSelector
+              currentIcon={user.profile_icon || 'https://img.icons8.com/color/96/user-male-circle--v1.png'}
+              onSelect={handleProfileIconChange}
+              onClose={() => setShowProfileIconSelector(false)}
+            />
           </div>
         </div>
       )}

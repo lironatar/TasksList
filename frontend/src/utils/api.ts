@@ -80,6 +80,24 @@ export const authApi = {
   }
 };
 
+// User API services
+export const userApi = {
+  getProfile: async () => {
+    const response = await api.get('/api/v1/users/profile');
+    return response.data;
+  },
+  
+  updateProfileIcon: async (profileIcon: string) => {
+    const response = await api.put('/api/v1/users/profile-icon', { profile_icon: profileIcon });
+    return response.data;
+  },
+  
+  getProfileIcons: async () => {
+    const response = await api.get('/api/v1/users/profile-icons');
+    return response.data;
+  }
+};
+
 // Task Lists API services
 export const taskListsApi = {
   getTaskLists: async () => {
